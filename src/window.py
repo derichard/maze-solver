@@ -3,13 +3,14 @@ from tkinter import Tk, BOTH, Canvas
 
 class Window:
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, bg="white"):
         self.width = width
         self.height = height
+        self.bg = bg
         self.root = Tk()
         self.root.title = "maze-solver"
         self.root.protocol("WM_DELETE_WINDOW", self.close)
-        self.canvas = Canvas(self.root, bg="blue", height=self.height, width=self.width)
+        self.canvas = Canvas(self.root, bg=self.bg, height=self.height, width=self.width)
         self.canvas.pack(fill=BOTH, expand=1)
         self.is_running = False
 
@@ -33,6 +34,9 @@ class Point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+    def __repr__(self):
+        return f"Point({self.x}, {self.y})"
 
 
 class Line:
@@ -74,3 +78,12 @@ class Cell:
 
         if self.has_bottom_wall:
             Line(self.p2, Point(self.p1.x, self.p2.y)).draw(self.win.canvas, "black")
+
+    def draw_move(self, to_cell, undo=False):
+        color = "gray" if undo else "red"
+
+        center1 = Point((self.p2.x + self.p1.x)/2, (self.p2.y + self.p1.y)/2)
+        center2 = Point((to_cell.p2.x + to_cell.p1.x)/2, (to_cell.p2.y + to_cell.p1.y)/2)
+        print(center1, center2)
+        line = Line(center1, center2)
+        line.draw(self.win.canvas, color)
