@@ -63,20 +63,16 @@ class Line:
 class Cell:
     def __init__(
         self,
-        has_left_wall,
-        has_right_wall,
-        has_top_wall,
-        has_bottom_wall,
         x1,
         y1,
         x2,
         y2,
-        win,
+        win=None,
     ):
-        self.has_left_wall = has_left_wall
-        self.has_right_wall = has_right_wall
-        self.has_top_wall = has_top_wall
-        self.has_bottom_wall = has_bottom_wall
+        self.has_left_wall = True
+        self.has_right_wall = True
+        self.has_top_wall = True
+        self.has_bottom_wall = True
         self.p1 = Point(x1, y1)
         self.p2 = Point(x2, y2)
         self.win = win
@@ -84,15 +80,23 @@ class Cell:
     def draw(self):
         if self.has_left_wall:
             Line(self.p1, Point(self.p1.x, self.p2.y)).draw(self.win.canvas, "black")
+        else:
+            Line(self.p1, Point(self.p1.x, self.p2.y)).draw(self.win.canvas, self.win.bg)
 
         if self.has_right_wall:
             Line(self.p2, Point(self.p2.x, self.p1.y)).draw(self.win.canvas, "black")
+        else:
+            Line(self.p2, Point(self.p2.x, self.p1.y)).draw(self.win.canvas, self.win.bg)
 
         if self.has_top_wall:
             Line(self.p1, Point(self.p2.x, self.p1.y)).draw(self.win.canvas, "black")
+        else:
+            Line(self.p1, Point(self.p2.x, self.p1.y)).draw(self.win.canvas, self.win.bg)
 
         if self.has_bottom_wall:
             Line(self.p2, Point(self.p1.x, self.p2.y)).draw(self.win.canvas, "black")
+        else:
+            Line(self.p2, Point(self.p1.x, self.p2.y)).draw(self.win.canvas, self.win.bg)   
 
     def draw_move(self, to_cell, undo=False):
         color = "gray" if undo else "red"
@@ -118,7 +122,7 @@ class Maze:
         num_cols,
         cell_size_x,
         cell_size_y,
-        win,
+        win=None,
     ):
         self.x1 = x1
         self.y1 = y1
@@ -129,16 +133,13 @@ class Maze:
         self.win = win
         self.cells = []
         self.create_cells()
+        self.break_entrance_and_exit()
 
     def create_cells(self):
         for i in range(self.num_cols):
             col = []
             for j in range(self.num_rows):
                 cell = Cell(
-                    True,
-                    True,
-                    True,
-                    True,
                     self.x1 + i * self.cell_size_x,
                     self.y1 + j * self.cell_size_y,
                     self.x1 + (i + 1) * self.cell_size_x,
@@ -153,9 +154,17 @@ class Maze:
                 self.draw_cell(i, j)
 
     def draw_cell(self, i, j):
+        if self.win is None:
+            return
         self.cells[i][j].draw()
         self.animate()
 
     def animate(self):
         self.win.redraw()
         time.sleep(0.05)
+
+    def break_entrance_and_exit(self):
+        self.cells[0][0].has_top_wall = False
+        self.cells[self.num_cols - 1][self.num_rows - 1].has_bottom_wall = False
+        self.draw_cell(0, 0)
+        self.draw_cell(self.num_cols - 1, self.num_rows - 1)
