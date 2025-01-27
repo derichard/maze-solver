@@ -142,14 +142,15 @@ class Maze:
         self.cell_size_y = cell_size_y
         self.win = win
         self.animation_speed = animation_speed
-        self.solve_algo = solve_algo
         self.solve_speed = solve_speed
         self.cells = []
         self.create_cells()
-        self.break_entrance_and_exit()
+        self.entrance = (random.randint(0, num_cols - 1), 0)
+        self.exit = (random.randint(0, num_cols - 1), num_rows - 1)
+        self.break_entrance_and_exit(self.entrance, self.exit)
         if seed is not None:
             random.seed(seed)
-        self.break_walls_r(0, 0)
+        self.break_walls_r(*self.entrance)
         self.reset_cells_visited()
         
 
@@ -181,12 +182,12 @@ class Maze:
         self.win.redraw()
         time.sleep(speed)
 
-    def break_entrance_and_exit(self):
-        self.cells[0][0].has_top_wall = False
-        self.cells[self.num_cols - 1][self.num_rows - 1].has_bottom_wall = False
-        self.draw_cell(0, 0)
-        self.draw_cell(self.num_cols - 1, self.num_rows - 1)
-
+    def break_entrance_and_exit(self, entrance, exit):
+        self.cells[entrance[0]][entrance[1]].has_top_wall = False
+        self.cells[exit[0]][exit[1]].has_bottom_wall = False
+        self.draw_cell(*entrance)
+        self.draw_cell(*exit)
+                       
     def break_walls_r(self, i, j):
         self.cells[i][j].visited = True
 
@@ -226,15 +227,15 @@ class Maze:
             for j in range(self.num_rows):
                 self.cells[i][j].visited = False
 
-    def solve(self):
-        return self.solve_r(0, 0)
+    def solve(self, solve_algo="dfs"):
+        if solve_algo == "dfs":
+            return self.solve_dfs_r(*self.entrance)
+        elif solve_algo == "bfs":
+            return self.solve_bfs(*self.entrance)
+        else:
+            raise NotImplementedError("Only dfs and bfs are supported")
     
-    def solve_r(self, i, j):
-        if i == self.num_cols - 1 and j == self.num_rows - 1:
-            return True
-        
-        self.cells[i][j].visited = True
-        
+    def get_neighbors(self, i, j):
         neighbors = []
         if i > 0 and not self.cells[i - 1][j].visited and not self.cells[i][j].has_left_wall:
             neighbors.append((i - 1, j))
@@ -245,17 +246,36 @@ class Maze:
         if j < self.num_rows - 1 and not self.cells[i][j + 1].visited and not self.cells[i][j].has_bottom_wall:
             neighbors.append((i, j + 1))
 
+        return neighbors
+    
+    def solve_bfs(self, i, j):
+        queue = [(i, j)]
+
+        while queue:
+            i, j = queue.pop(0)
+            self.cells[i][j].visited = True
+            neighbors = self.get_neighbors(i, j)
+            for next_i, next_j in neighbors:
+                self.cells[i][j].draw_move(self.cells[next_i][next_j])
+                self.animate(self.solve_speed)
+                if next_i == self.exit[0] and next_j == self.exit[1]:
+                    return True
+            queue.extend(neighbors)
+
+        return False
+    
+    def solve_dfs_r(self, i, j):
+        if i == self.exit[0] and j == self.exit[1]:
+            return True
+        
+        self.cells[i][j].visited = True   
+        neighbors = self.get_neighbors(i, j)
+
         while neighbors:
-            if self.solve_algo == "dfs":
-                next_i, next_j = neighbors.pop()
-            elif self.solve_algo == "bfs":
-                next_i, next_j = neighbors.pop(0)
-            else:
-                raise NotImplementedError(f"solve algorithm {self.solve_algo} not implemented")
-            
+            next_i, next_j = neighbors.pop()
             self.cells[i][j].draw_move(self.cells[next_i][next_j])
             self.animate(self.solve_speed)
-            if self.solve_r(next_i, next_j):
+            if self.solve_dfs_r(next_i, next_j):
                 return True
             else:
                 self.cells[i][j].draw_move(self.cells[next_i][next_j], undo=True)
