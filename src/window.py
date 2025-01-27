@@ -122,20 +122,21 @@ class Cell:
 class Maze:
     def __init__(
         self,
-        x1,
-        y1,
-        num_rows,
-        num_cols,
-        cell_size_x,
-        cell_size_y,
+        num_rows=10,
+        num_cols=10,
+        cell_size_x=40,
+        cell_size_y=40,
         win=None,
-        solve_algo="dfs",
         animation_speed=0.01,
         solve_speed=0.5,
         seed=None,
-    ):
-        self.x1 = x1
-        self.y1 = y1
+        x=10,
+        y=10,
+        entrance=None,
+        exit=None
+    ):  
+        self.x = x
+        self.y = y
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.cell_size_x = cell_size_x
@@ -145,11 +146,18 @@ class Maze:
         self.solve_speed = solve_speed
         self.cells = []
         self.create_cells()
-        self.entrance = (random.randint(0, num_cols - 1), 0)
-        self.exit = (random.randint(0, num_cols - 1), num_rows - 1)
-        self.break_entrance_and_exit(self.entrance, self.exit)
         if seed is not None:
             random.seed(seed)
+        if entrance is None:
+            self.entrance = (random.randint(0, num_cols - 1), 0)
+        else:
+            self.entrance = entrance
+        if exit is None:
+            self.exit = (random.randint(0, num_cols - 1), num_rows - 1)
+        else:
+            self.exit = exit
+        self.break_entrance_and_exit(self.entrance, self.exit)
+
         self.break_walls_r(*self.entrance)
         self.reset_cells_visited()
         
@@ -159,10 +167,10 @@ class Maze:
             col = []
             for j in range(self.num_rows):
                 cell = Cell(
-                    self.x1 + i * self.cell_size_x,
-                    self.y1 + j * self.cell_size_y,
-                    self.x1 + (i + 1) * self.cell_size_x,
-                    self.y1 + (j + 1) * self.cell_size_y,
+                    self.x + i * self.cell_size_x,
+                    self.y + j * self.cell_size_y,
+                    self.x + (i + 1) * self.cell_size_x,
+                    self.y + (j + 1) * self.cell_size_y,
                     self.win,
                 )
                 col.append(cell)
